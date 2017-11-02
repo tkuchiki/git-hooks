@@ -1,0 +1,32 @@
+#!/bin/sh
+
+color() {
+    local red='\033[0;31m'
+    local clear='\033[0m'
+    printf "${red}${1}${clear}"
+}
+
+filesize() {
+    wc -c < ${1} | awk '{ print $1 }'
+}
+
+MAX_FILE_SIZE=1000000
+
+LARGE_FILES=""
+
+for f in `git diff --cached --name-only --diff-filter=A`; do
+    FILE_SIZE=$(filesize ${f})
+    if [ ${MAX_FILE_SIZE} -lt ${FILE_SIZE} ]; then
+        MSG="${FILE_SIZE} ${f}"
+        LARGE_FILES="${LARGE_FILES}${MSG}\n"
+    fi
+done
+
+if [ "${LARGE_FILES}" != "" ]; then
+    color "# Too large files"
+    echo
+    echo
+    printf "${MSG}"
+    echo
+    exit 1
+fi
